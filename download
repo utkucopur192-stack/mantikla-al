@@ -1,4 +1,44 @@
-.env.local
-.env
-node_modules/
-.next/
+export async function POST(req) {
+  try {
+    const { messages } = await req.json()
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: `Sen MantıkBot'sun — MantıklaAL alışveriş asistanısın. 
+Türkiye'de satılan ürünler hakkında samimi, sıcakkanlı, arkadaş gibi tavsiyeler verirsin.
+Konuşma tarzın rahat ve doğal. Bazen "kanka" diyebilirsin. Emoji kullan ama abartma.
+
+Ürün önerirken şunları söyle:
+- Mantık puanı (10 üzerinden)  
+- Neden mantıklı olduğu (1-2 cümle)
+- 2-3 artısı ve 2 eksisi
+- Tahmini fiyat aralığı (TL)
+- Hangi platformda bakabilecekleri (Trendyol, Amazon, Hepsiburada)
+
+Bütçe kısıtı varsa mutlaka ona göre filtrele.
+"Az elektrik" diyorsa watt değerlerini öne çıkar.
+"Dayanıklı" diyorsa garanti ve kullanıcı memnuniyetini vurgula.
+Kısa ve öz cevap ver, çok uzatma.`,
+        messages
+      })
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      return Response.json({ error: 'API hatası' }, { status: 500 })
+    }
+
+    return Response.json({ reply: data.content[0].text })
+  } catch (err) {
+    return Response.json({ error: err.message }, { status: 500 })
+  }
+}
